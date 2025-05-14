@@ -354,6 +354,145 @@
 </div>
 
 <script>
+    // Observer Pattern Implementation
+    class QuizEventSubject {
+        constructor() {
+            this.observers = [];
+        }
+        
+        subscribe(observer) {
+            if (!this.observers.includes(observer)) {
+                this.observers.push(observer);
+                console.log("New observer subscribed");
+                return () => this.unsubscribe(observer); // Return function to unsubscribe
+            }
+        }
+        
+        unsubscribe(observer) {
+            this.observers = this.observers.filter(obs => obs !== observer);
+            console.log("Observer unsubscribed");
+        }
+        
+        notify(event, data) {
+            this.observers.forEach(observer => {
+                observer.update(event, data);
+            });
+        }
+    }
+
+    // Create the subject/publisher instance
+    const quizEventPublisher = new QuizEventSubject();
+    
+    // Example observers
+    const analyticsObserver = {
+        update(event, data) {
+            if (event === 'quiz-created') {
+                console.log(`Analytics: New quiz "${data.title}" has been created and logged`);
+                // In a real app, this might send data to an analytics service
+            }
+        }
+    };
+    
+    const notificationObserver = {
+        update(event, data) {
+            if (event === 'quiz-created') {
+                // This could trigger a notification in another part of the UI
+                console.log(`Notification: New quiz "${data.title}" created by admin`);
+                
+                // Create a special notification that's different from the regular toast
+                const notification = document.createElement('div');
+                notification.className = 'observer-notification';
+                notification.innerHTML = `
+                    <div class="notification-content">
+                        <i class="fas fa-bell"></i>
+                        <div class="notification-message">
+                            <strong>Real-time Update:</strong> Quiz "${data.title}" was just created!
+                        </div>
+                        <button class="notification-close">&times;</button>
+                    </div>
+                `;
+                document.body.appendChild(notification);
+                
+                // Add styles dynamically
+                const style = document.createElement('style');
+                style.textContent = `
+                    .observer-notification {
+                        position: fixed;
+                        bottom: 20px;
+                        left: 20px;
+                        background-color: #3498db;
+                        color: white;
+                        padding: 12px 15px;
+                        border-radius: 4px;
+                        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+                        z-index: 9999;
+                        max-width: 300px;
+                        animation: slideIn 0.5s forwards;
+                    }
+                    
+                    .notification-content {
+                        display: flex;
+                        align-items: center;
+                    }
+                    
+                    .notification-content i {
+                        margin-right: 10px;
+                    }
+                    
+                    .notification-close {
+                        background: none;
+                        border: none;
+                        color: white;
+                        margin-left: 10px;
+                        cursor: pointer;
+                        font-size: 18px;
+                    }
+                    
+                    @keyframes slideIn {
+                        from {transform: translateX(-100%); opacity: 0;}
+                        to {transform: translateX(0); opacity: 1;}
+                    }
+                `;
+                document.head.appendChild(style);
+                
+                // Handle close button
+                notification.querySelector('.notification-close').addEventListener('click', () => {
+                    notification.remove();
+                });
+                
+                // Auto-remove after 5 seconds
+                setTimeout(() => {
+                    notification.style.animation = 'slideOut 0.5s forwards';
+                    setTimeout(() => notification.remove(), 500);
+                }, 5000);
+            }
+        }
+    };
+    
+    const websocketObserver = {
+        update(event, data) {
+            if (event === 'quiz-created') {
+                console.log(`WebSocket: Broadcasting quiz creation: "${data.title}"`);
+                // In a real app, this would send a message through a WebSocket connection
+                // socket.send(JSON.stringify({event: 'quiz-created', data}));
+            }
+        }
+    };
+    
+    const dashboardObserver = {
+        update(event, data) {
+            if (event === 'quiz-created') {
+                console.log(`Dashboard: Updating recent activity with new quiz: "${data.title}"`);
+                // Here you might update a recent activity widget or counter
+            }
+        }
+    };
+    
+    // Subscribe observers
+    quizEventPublisher.subscribe(analyticsObserver);
+    quizEventPublisher.subscribe(notificationObserver);
+    quizEventPublisher.subscribe(websocketObserver);
+    quizEventPublisher.subscribe(dashboardObserver);
     // DOM Elements
     const addQuizBtn = document.getElementById('addQuizBtn');
     const addQuizModal = document.getElementById('addQuizModal');
@@ -405,9 +544,19 @@
         const category = document.getElementById('quizCategory').value;
         const tags = document.getElementById('quizTags').value;
         
+        // Create quiz data object
+        const quizData = {
+            id: quizCounter,
+            title,
+            description,
+            category,
+            tags,
+            createdAt: new Date()
+        };
         // Add new quiz to table
         addQuizToTable(title, description, category, tags);
-        
+        // Notify observers about the new quiz using the Observer pattern
+        quizEventPublisher.notify('quiz-created', quizData);
         // Close modal and show success notification
         closeModals();
         showToast('Quiz added successfully!');
