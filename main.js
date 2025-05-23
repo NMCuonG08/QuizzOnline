@@ -28,15 +28,18 @@ import roomRouter from "./routes/roomRoute.js";
 import chatbotRouter from "./routes/chatbotRouter.js";
 import initWebSocket from "./services/webSocketService.js";
 import cors from "cors";
-
+import apiRoute from "./routes/apiRoute.js";
 import { pool } from './configs/db.js';
+import mobileApiRouter from "./routes/mobileApiRouter.js";
+
 
 // import halenTestRoute from "./routes/halenTestRoute.js";
 dotenv.config();
 const app = express();
 app.set("trust proxy", 1);
 app.use(flash());
-
+app.use("/api", apiRoute);
+app.use("/api/mobile", mobileApiRouter);
 app.engine(
   "hbs",
   engine({

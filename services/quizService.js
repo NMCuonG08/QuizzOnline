@@ -217,6 +217,7 @@ export default {
     // Search quizzes
     async searchQuizzes(searchTerm) {
         try {
+            // Gọi repository để tìm kiếm với từ khóa
             const quizzes = await quizRepository.searchQuizzes(searchTerm);
 
             if (!quizzes || quizzes.length === 0) {
@@ -226,7 +227,7 @@ export default {
             // Get additional quiz info
             const quizIds = quizzes.map(quiz => quiz.id);
             const mediaIds = quizzes.map(quiz => quiz.media).filter(Boolean);
-
+            // Lấy thông tin media
             const mediaResults = await quizRepository.getMediaByIds(mediaIds);
             const mediaMap = mediaResults.reduce((map, item) => {
                 map[item.id] = item.url;

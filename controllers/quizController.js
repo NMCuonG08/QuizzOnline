@@ -188,6 +188,7 @@ export default {
         try {
             const searchTerm = req.query.q || '';
 
+            // Check if the search term is empty
             if (!searchTerm.trim()) {
                 return res.render('search-results', {
                     quizzes: [],
@@ -197,9 +198,9 @@ export default {
                     title: 'Kết quả tìm kiếm'
                 });
             }
-
-            const quizzes = await strategieService.searchQuizzes(searchTerm);
-
+            // Use the search service to find quizzes
+            const quizzes = await quizService.searchQuizzes(searchTerm);
+            // Render view with search results
             res.render('search-results', {
                 quizzes,
                 searchTerm,
